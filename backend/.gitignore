@@ -1,17 +1,26 @@
-#Python Virtual Environment
+# Python Virtual Environment
 venv/
 .venv/
 env/
 __pycache__/
 *.pyc
 
-#Environment Variables
+# Environment Variables
 .env
-.DS_Store
-backend/.env
-__pycache__/
-.env.example
+.env.local
+!.env.example
 
-#Database Data
+# OS
+.DS_Store
+
+# Database
+*.db
+*.sqlite3
+
+# Uploads (user-generated)
+uploads/*
+!uploads/.gitkeep
+
+# Docker runtime
 postgres_data/
 redis_data/

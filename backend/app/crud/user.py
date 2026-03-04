@@ -18,3 +18,13 @@ def create_user(db: Session, user: UserCreate):
     db.commit()
     db.refresh(db_user)
     return db_user
+
+def update_user_location(db: Session, user_id: int, latitude: float, longitude: float):
+    """Store the user's browser-detected geolocation."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if user:
+        user.latitude = latitude
+        user.longitude = longitude
+        db.commit()
+        db.refresh(user)
+    return user

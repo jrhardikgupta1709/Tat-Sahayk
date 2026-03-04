@@ -1,78 +1,102 @@
-import React from "react";
-import { Link, useLocation } from "react-router"; 
-import { ClipboardList, Map, LayoutDashboard, X, PlusCircle } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { useLanguage } from '../hooks/LanguageContext';
+import {
+  LayoutDashboard,
+  FilePlus,
+  FileText,
+  Map,
+  ShieldCheck,
+  Globe,
+  User,
+  LogOut,
+  Waves,
+} from 'lucide-react';
+import { cn } from '../lib/utils';
 
-const SideBar = ({ isOpen, onClose }) => {
-  const location = useLocation();
-  const currentPath = location.pathname;
+export default function Sidebar() {
+  const { user, logout } = useAuth();
+  const { t } = useLanguage();
+  const navigate = useNavigate();
+  const isAdmin = user?.role === 'admin' || user?.role === 'official';
 
-  const activeLinkClasses = "!bg-cyan-200 hover:!bg-blue-700 hover:!text-white text-blue-900";
-  const inactiveLinkClasses = "text-blue-900 hover:bg-blue-50";
-  
-  const navItems = [
-    { to: "/", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
-    { to: "/profile", label: "My Profile", icon: <ClipboardList size={20}/> },
-    { to: "/Map", label: "Map", icon: <Map size={20} /> },
+  const NAV_ITEMS = [
+    { to: '/dashboard',     label: t('nav.dashboard'),    icon: LayoutDashboard },
+    { to: '/create-report', label: t('nav.newReport'),    icon: FilePlus },
+    { to: '/reports',       label: t('nav.reports'),       icon: FileText },
+    { to: '/map',           label: t('nav.map'),           icon: Map },
   ];
 
+  const ADMIN_ITEMS = [
+    { to: '/admin',  label: t('nav.admin'),  icon: ShieldCheck, roles: ['admin', 'official'] },
+    { to: '/zones',  label: t('nav.zones'),  icon: Globe,       roles: ['admin'] },
+  ];
+
+  const linkClass = ({ isActive }) =>
+    cn(
+      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+      isActive
+        ? 'bg-brand-50 text-brand-700'
+        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+    );
+
   return (
-    <div>
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 lg:hidden backdrop-blur-sm z-[1000]"
-          onClick={onClose}
-        />
-      )}
-
-      <aside
-        className={`
-          flex flex-col h-screen bg-white shrink-0 w-64
-          fixed top-0 left-0 z-[1000] transition-transform duration-300 ease-in-out
-          lg:translate-x-0 lg:relative lg:top-0
-          ${isOpen ? "translate-x-0 z-[1000]" : "-translate-x-full"}
-        `}
-      >
-        <div className="flex items-center justify-between h-16 px-6 border-b border-blue-200 shrink-0">
-           <span className="text-xl font-semibold font-sans bg-clip-text text-blue-600 tracking-wider truncate px-2 ">
-             Tat-Sahayak
-           </span>
-           
-           <button onClick={onClose} className="lg:hidden text-blue-500">
-             <X size={24} />
-           </button>
+    <aside className="fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-gray-200 bg-white">
+      {/* Logo */}
+      <div className="flex h-16 items-center gap-2.5 border-b border-gray-200 px-5">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500">
+          <Waves className="h-5 w-5 text-white" />
         </div>
+        <div>
+          <p className="text-sm font-bold text-gray-900 leading-tight">Tat Sahayak</p>
+          <p className="text-[11px] text-gray-500 leading-tight">Coastal Guardian</p>
+        </div>
+      </div>
 
-        <nav className="flex-1 p-4 space-y-2 pt-5 overflow-y-auto border-r border-blue-200">
-          {navItems.map(({ to, label, icon }) => (
-            <Link
-              key={to}
-              to={to}
-              onClick={() => onClose()} 
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 ${
-                currentPath === to ? activeLinkClasses : inactiveLinkClasses
-              }`}
-            >
-              <span className="shrink-0">{icon}</span>
-              <span className="font-medium">{label}</span>
-            </Link>
-          ))}
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+          Main
+        </p>
+        {NAV_ITEMS.map((item) => (
+          <NavLink key={item.to} to={item.to} className={linkClass}>
+            <item.icon className="h-[18px] w-[18px]" />
+            {item.label}
+          </NavLink>
+        ))}
 
-          {/* Linked New Report Button */}
-          <div className="pt-4 mt-4 border-t border-blue-100">
-            <Link 
-              to="/New" 
-              onClick={() => onClose()}
-              className="flex items-center justify-center gap-2 w-full py-3 bg-blue-700 text-white rounded-xl font-bold hover:bg-blue-800 shadow-lg shadow-blue-200 transition-all active:scale-95"
-            >
-              <PlusCircle size={18} />
-              New Report
-            </Link>
-          </div>
-          
-        </nav>
-      </aside>
-    </div>
+        {isAdmin && (
+          <>
+            <p className="px-3 pt-5 pb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+              Administration
+            </p>
+            {ADMIN_ITEMS.filter((item) => item.roles.includes(user?.role)).map((item) => (
+              <NavLink key={item.to} to={item.to} className={linkClass}>
+                <item.icon className="h-[18px] w-[18px]" />
+                {item.label}
+              </NavLink>
+            ))}
+          </>
+        )}
+      </nav>
+
+      {/* User footer */}
+      <div className="border-t border-gray-200 p-3 space-y-1">
+        <button
+          onClick={() => navigate('/profile')}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-100"
+        >
+          <User className="h-[18px] w-[18px]" />
+          <span className="flex-1 text-left truncate">{user?.full_name || user?.email}</span>
+        </button>
+        <button
+          onClick={logout}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-red-600 hover:bg-red-50"
+        >
+          <LogOut className="h-[18px] w-[18px]" />
+          {t('nav.signOut')}
+        </button>
+      </div>
+    </aside>
   );
-};
-
-export default SideBar;
+}

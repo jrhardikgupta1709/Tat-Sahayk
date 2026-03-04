@@ -12,3 +12,6 @@ geoalchemy2==0.14.3       # For PostGIS support
 httpx==0.26.0             # Async HTTP client
 email-validator==2.1.0.post1
 bcrypt==4.0.1
+feedparser==6.0.10
+apscheduler==3.10.4
+cloudinary==1.36.0

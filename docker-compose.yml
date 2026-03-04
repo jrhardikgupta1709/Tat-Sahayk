@@ -1,25 +1,74 @@
-version: '3.8'
+version: "3.8"
+
+#  Tat-Sahayk — One-Command Deployment
+#
+#  Usage:
+#    docker compose up --build        # start everything
+#    docker compose up --build -d     # start in background
+#    docker compose down              # stop everything
 
 services:
-  # The Database
-  postgres:
-    image: postgis/postgis:14-3.2
-    container_name: tat_sahayk_db
+  # ── ML Service (port 8000) ─────────────────────────
+  ml-service:
+    build: ./ml-service
+    container_name: tat_sahayk_ml
     ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=oceandb
+      - "8000:8000"
+    env_file:
+      - ./ml-service/.env
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ml_models:/app/models
+      - ml_logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
 
-  # The Cache
-  redis:
-    image: redis:7-alpine
-    container_name: tat_sahayk_redis
+  # ── Backend API (port 5001) ────────────────────────
+  backend:
+    build: ./backend
+    container_name: tat_sahayk_backend
     ports:
-      - "6379:6379"
+      - "5001:5001"
+    env_file:
+      - ./backend/.env
+    environment:
+      - ML_SERVICE_URL=http://ml-service:8000
+    volumes:
+      - backend_uploads:/app/uploads
+      - backend_db:/app
+    depends_on:
+      ml-service:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+
+  # ── Frontend (port 3000 → nginx 80) ────────────────
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:5001/api/v1
+        VITE_ML_URL: http://localhost:8000
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+    container_name: tat_sahayk_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
-  postgres_data:
+  ml_models:
+  ml_logs:
+  backend_uploads:
+  backend_db:

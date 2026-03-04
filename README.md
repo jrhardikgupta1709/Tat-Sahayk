@@ -54,8 +54,6 @@ Tat-Sahayk is an intelligent ocean hazard detection platform that combines **cro
 
 - Python 3.10+
 - Node.js 18+
-- PostgreSQL 14+ with PostGIS extension
-- Redis 6+
 - Docker & Docker Compose (optional)
 
 ### **Option 1: Docker Setup (Recommended)**
@@ -65,14 +63,18 @@ Tat-Sahayk is an intelligent ocean hazard detection platform that combines **cro
 git clone https://github.com/yourusername/tat-sahayk.git
 cd tat-sahayk
 
+# Copy environment files and fill in your values
+cp backend/.env.example backend/.env
+cp ml-service/.env.example ml-service/.env
+cp frontend/.env.example frontend/.env
+
 # Start all services
-docker-compose up -d
+docker compose up --build
 
 # Access the application
-# Frontend: http://localhost:3000
-# Backend API: http://localhost:8000
-# ML Service: http://localhost:8001
-# API Docs: http://localhost:8000/docs
+# Frontend:    http://localhost:3000
+# Backend API: http://localhost:5001 (docs at /docs)
+# ML Service:  http://localhost:8000 (docs at /docs)
 ```
 
 ### **Option 2: Manual Setup**
@@ -91,13 +93,10 @@ pip install -r requirements.txt
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your database credentials
+# Edit .env with your settings
 
-# Run database migrations
-alembic upgrade head
-
-# Start the server
-uvicorn app.main:app --reload --port 8000
+# Start the server (SQLite DB is created automatically)
+uvicorn app.main:app --reload --host 0.0.0.0 --port 5001
 ```
 
 #### **2. ML Service Setup**
@@ -112,16 +111,15 @@ source venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Download required models
+# Download NLP models
 python -m spacy download en_core_web_sm
-python scripts/download_models.py
 
 # Configure environment
 cp .env.example .env
-# Add your API keys (OpenWeatherMap, StormGlass)
+# Add your API keys (OpenWeatherMap, etc.)
 
 # Start the service
-uvicorn src.api.routes.main:app --reload --port 8001
+uvicorn src.api.routes.main:app --host 0.0.0.0 --port 8000
 ```
 
 #### **3. Frontend Setup**
@@ -134,10 +132,10 @@ npm install
 
 # Configure environment
 cp .env.example .env
-# Update API endpoints
 
 # Start development server
-npm start
+npm run dev
+# Opens at http://localhost:5173
 ```
 
 ---
@@ -243,8 +241,8 @@ pytest tests/test_integration.py -v
 
 Once the services are running, access the interactive API documentation:
 
-- **Backend API**: http://localhost:8000/docs
-- **ML Service API**: http://localhost:8001/docs
+- **Backend API**: http://localhost:5001/docs
+- **ML Service API**: http://localhost:8000/docs
 
 ### **Key Endpoints**
 
@@ -291,11 +289,11 @@ Once the services are running, access the interactive API documentation:
 
 | Layer | Technologies |
 |-------|-------------|
-| **Frontend** | React, Tailwind CSS, Leaflet, Axios, React Router |
-| **Backend** | FastAPI, PostgreSQL, PostGIS, Redis, SQLAlchemy |
-| **ML/AI** | PyTorch, Transformers, spaCy, scikit-learn, NumPy |
+| **Frontend** | React 18, Vite, Tailwind CSS, Leaflet, Axios, React Router |
+| **Backend** | FastAPI, SQLite, SQLAlchemy, Pydantic, JWT Auth |
+| **ML/AI** | PyTorch, Transformers, spaCy, scikit-learn, NLTK |
 | **DevOps** | Docker, Docker Compose, Nginx |
-| **External APIs** | OpenWeatherMap, StormGlass, GDACS, Cloudinary |
+| **External APIs** | OpenWeatherMap, NOAA, Cloudinary, Google OAuth |
 
 ---
 
@@ -304,7 +302,7 @@ Once the services are running, access the interactive API documentation:
 - **Response Time**: <100ms per text analysis
 - **Throughput**: 1000+ reports per hour
 - **Geospatial Processing**: 1000x faster with KD-Tree
-- **Database Queries**: Optimized with PostGIS spatial indexing
+- **Database Queries**: Optimized with SQLAlchemy eager-loading
 - **API Latency**: p95 < 200ms
 
 ---

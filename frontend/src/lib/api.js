@@ -1,41 +1,30 @@
-import { axiosInstance } from "./axios";
+import axios from 'axios';
 
-//is user authenticated
-export const getAuthUser = async()=>{
-     try {
-      const savedUser = localStorage.getItem("simulated_user");
-      
-      if (savedUser) {
-          return { user: JSON.parse(savedUser) };
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api/v1';
+
+export const api = axios.create({
+  baseURL: BASE_URL,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+api.interceptors.response.use(
+  (r) => r,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
       }
-      
-      return null;
-     } catch (error) {
-      console.log("Error in auth user");
-        return null;
-     }
-}
+    }
+    return Promise.reject(error);
+  },
+);
 
-
-export const login = async (loginData) => {
-  // const response = await axiosInstance.post("/auth/login", loginData);
-  await delay(800);
-    const mockUser = {
-        id: "usr_12345",
-        full_name: "Hardik Gupta",
-        email: loginData.email || "hardik@gmail.com",
-        city: "Jaipur",
-        state: "Rajasthan",
-        created_at: new Date().toISOString()
-    };
-
-
-    localStorage.setItem("simulated_user", JSON.stringify(mockUser));//backend simulation
-    return { message: "Login successful", user: mockUser };
-  // return response.data;
-};
-
-export const signup = async (SignUpData) => {
-  const response = await axiosInstance.post("/auth/signup", SignUpData);
-  return response.data;
-};
+export default api;

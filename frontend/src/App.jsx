@@ -1,103 +1,49 @@
-import LoginPage from './pages/LoginPage'
-import useAuthUser from './hooks/useAuthUser.js';
-import {Routes,Route,Navigate} from "react-router";
-import HomePage from './pages/HomePage.jsx';
-import Layout from './components/Layout.jsx';
-import ProfilePage from './pages/ProfilePage.jsx';
-import MapPage from './pages/MapPage.jsx';
-import CreateReport from './pages/CreateReport.jsx';
-import SignupPage from './pages/SignupPage.jsx';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './hooks/useAuth';
+import LanguageProvider from './hooks/LanguageContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import AppLayout from './components/AppLayout';
 
-const App = () => {
-  const { isLoading, authUser } = useAuthUser();
-  const isAuthenticated = Boolean(authUser);
-  // const isAuthenticated = true;
+import Landing from './pages/Landing';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Dashboard from './pages/Dashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import CreateReport from './pages/CreateReport';
+import Reports from './pages/Reports';
+import ReportDetail from './pages/ReportDetail';
+import MapPage from './pages/Map';
+import Profile from './pages/Profile';
+import ZoneManagement from './pages/ZoneManagement';
 
-  if (isLoading) {
-    return <div className="h-screen flex items-center justify-center font-bold text-blue-600">Verifying Connection...</div>;
-  }
-
+export default function App() {
   return (
-    <div className="h-screen">
-      <Routes>
-        <Route 
-          path='/'
-          element={
-            isAuthenticated?(
-              <Layout>
-                <HomePage/>
-              </Layout>    
-            ):
-            (
-              <Navigate to = "/login" />
-            )
-          }
-        />
-        <Route 
-          path='/map'
-          element={
-            isAuthenticated?(
-              <Layout>
-                <MapPage/>
-              </Layout>    
-            ):
-            (
-              <Navigate to = "login" />
-            )
-          }
-        />
-        <Route 
-          path='/profile'
-          element={
-            isAuthenticated?(
-              <Layout>
-                <ProfilePage/>
-              </Layout>    
-            ):
-            (
-              <Navigate to = "login" />
-            )
-          }
-        />
-        <Route
-           path='/login'
-           element={
-            !isAuthenticated?(
-              <LoginPage />
-            ):
-            (
-              <Navigate to ="/"/>
-            )
-           }
-        />
-        <Route
-           path='/signup'
-           element={
-            !isAuthenticated?(
-              <SignupPage />
-            ):
-            (
-              <Navigate to ="/"/>
-            )
-           }
-        />
-        <Route
-           path='/New'
-           element={
-            isAuthenticated?(
-              <Layout>
-                <CreateReport/>
-              </Layout>
-              
-            ):
-            (
-              <Navigate to ="/login"/>
-            )
-           }
-        />
-      </Routes>
-    </div>
-  )
-}
+    <BrowserRouter>
+      <LanguageProvider>
+        <AuthProvider>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
 
-export default App
+            {/* Authenticated routes with sidebar layout */}
+            <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/create-report" element={<CreateReport />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/reports/:id" element={<ReportDetail />} />
+              <Route path="/map" element={<MapPage />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/zones" element={<ZoneManagement />} />
+            </Route>
+
+            {/* Catch-all */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AuthProvider>
+      </LanguageProvider>
+    </BrowserRouter>
+  );
+}

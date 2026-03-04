@@ -12,10 +12,17 @@ class UserCreate(UserBase):
 class UserResponse(UserBase):
     id: int
     is_active: bool
+    zone_id: Optional[int] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
     class Config:
         from_attributes = True
-        
+
+class UpdateLocation(BaseModel):
+    latitude: float
+    longitude: float
+
 # New Schema for Login Request
 class UserLogin(BaseModel):
     email: EmailStr
